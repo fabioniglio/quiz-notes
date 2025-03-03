@@ -17,6 +17,7 @@ import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as key from "../key.js";
 import type * as lib from "../lib.js";
+import type * as quizzes from "../quizzes.js";
 import type * as users from "../users.js";
 
 /**
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   key: typeof key;
   lib: typeof lib;
+  quizzes: typeof quizzes;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

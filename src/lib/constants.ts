@@ -1,8 +1,8 @@
 export const ROUTES = {
   login: '/',
   quizHome: '/quizzes',
-  quizDetail: '/quizzes/:id',
-  quizDetailResults: '/quizzes/:id/results',
+  quizDetail: '/quizzes/:quizId',
+  quizDetailResults: '/quizzes/:quizId/results',
 } as const
 
 export const TAB_VALUES = {
