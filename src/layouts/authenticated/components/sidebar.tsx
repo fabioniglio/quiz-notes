@@ -1,25 +1,15 @@
-import { InputWithFeedback } from '@/components/input-with-feedback'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { ROUTES } from '@/lib/constants'
-import { cn, handlePromise } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { useAuthActions } from '@convex-dev/auth/react'
 import { api } from '@convex/_generated/api'
 import { Doc } from '@convex/_generated/dataModel'
-import { useAction, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { BookOpen, LogOut, Plus, Settings } from 'lucide-react'
-import { useActionState, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { generatePath, Link, useLocation } from 'react-router'
-import { toast } from 'sonner'
+import { SettingsDialog } from './settings-dialog'
 
 function QuizLinkItem({ quiz }: { quiz: Doc<'quizzes'> }) {
   const pathname = useLocation().pathname
@@ -115,156 +105,5 @@ export function Sidebar() {
         />
       )}
     </>
-  )
-}
-
-type FormState =
-  | {
-      status: 'error'
-      error: string
-    }
-  | {
-      status: 'success'
-    }
-  | {
-      status: 'idle'
-    }
-
-const API_KEY_FORM_NAME = 'api-key'
-
-function SettingsDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const user = useQuery(api.users.getCurrentUser)
-  const [isApiKeyVisible, setIsApiKeyVisible] = useState(false)
-  const getApiKey = useAction(api.key.getApiKey)
-  const storeApiKey = useAction(api.key.storeApiKey)
-
-  const [apiKey, setApiKey] = useState('')
-  const [fetchExistingKeyStatus, setFetchExistingKeyStatus] = useState<
-    'idle' | 'loading' | 'error' | 'success'
-  >('idle')
-  const [fetchExistingKeyErrorMessage, setFetchExistingKeyErrorMessage] =
-    useState('')
-
-  const hasUserApiKey = Boolean(user?.api)
-
-  const [state, formAction, isPending] = useActionState<FormState, FormData>(
-    async (_, formData) => {
-      const apiKey = formData.get(API_KEY_FORM_NAME) as string
-
-      const [, error] = await handlePromise(storeApiKey({ apiKey }))
-
-      if (error) {
-        return {
-          status: 'error',
-          error: 'Failed to save API key. Please try again.',
-        }
-      }
-
-      toast.success('API key saved successfully')
-      onOpenChange(false)
-
-      return {
-        status: 'success',
-      }
-    },
-    { status: 'idle' }
-  )
-
-  useEffect(() => {
-    if (open && hasUserApiKey) {
-      // Fetch API key when dialog opens and user has api key
-      setFetchExistingKeyStatus('loading')
-      getApiKey()
-        .then((key) => {
-          if (key) setApiKey(key)
-          setFetchExistingKeyStatus('success')
-        })
-        .catch(() => {
-          setFetchExistingKeyErrorMessage(
-            'Failed to fetch existing API key. Please try again.'
-          )
-          setFetchExistingKeyStatus('error')
-        })
-    }
-  }, [open, getApiKey, hasUserApiKey])
-
-  const isApiKeyEmpty = apiKey === ''
-
-  const isError = fetchExistingKeyStatus === 'error' || state.status === 'error'
-  const errorMessage =
-    fetchExistingKeyStatus === 'error'
-      ? fetchExistingKeyErrorMessage
-      : state.status === 'error'
-        ? state.error
-        : ''
-
-  const isFetchingExistingKey = fetchExistingKeyStatus === 'loading'
-  const placeholder = isFetchingExistingKey
-    ? 'Fetching existing API key...'
-    : 'sk-...'
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <form action={formAction}>
-          <DialogHeader>
-            <DialogTitle>Settings</DialogTitle>
-            <DialogDescription>
-              Configure your{' '}
-              <a
-                href="https://openai.com/index/openai-api/"
-                target="_blank"
-                rel="noreferrer"
-                className="underline"
-              >
-                OpenAI API key
-              </a>{' '}
-              for quiz generation.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 py-4">
-            <Label htmlFor={API_KEY_FORM_NAME}>API Key</Label>
-            <div className="flex items-center gap-2">
-              <InputWithFeedback
-                id={API_KEY_FORM_NAME}
-                type={isApiKeyVisible ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                className="grow"
-                placeholder={placeholder}
-                errorMessage={errorMessage}
-                isError={isError}
-                required
-                isLoading={isFetchingExistingKey}
-                disabled={isFetchingExistingKey}
-              />
-              <Button
-                variant="outline"
-                onClick={() => setIsApiKeyVisible(!isApiKeyVisible)}
-                className="h-full"
-              >
-                {isApiKeyVisible ? 'Hide' : 'Show'}
-              </Button>
-            </div>
-          </div>
-          <DialogFooter className="mt-4">
-            <Button
-              type="submit"
-              onClick={() => onOpenChange(false)}
-              isLoading={isPending}
-              disabled={isPending || isApiKeyEmpty}
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   )
 }
