@@ -6,7 +6,7 @@ export function AuthenticatedLayout() {
     // root wrapper has flex column
     <div className="flex w-full grow items-center">
       <Sidebar />
-      <div className="min-h-full grow">
+      <div className="min-h-screen grow p-6 md:p-8 lg:p-10">
         <Outlet />
       </div>
     </div>
