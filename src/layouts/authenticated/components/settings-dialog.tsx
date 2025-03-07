@@ -130,6 +130,7 @@ export function SettingsDialog({
             <div className="flex items-center gap-2">
               <InputWithFeedback
                 id={API_KEY_FORM_NAME}
+                name={API_KEY_FORM_NAME}
                 type={isApiKeyVisible ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
@@ -144,6 +145,7 @@ export function SettingsDialog({
               <Button
                 variant="outline"
                 onClick={() => setIsApiKeyVisible(!isApiKeyVisible)}
+                type="button"
                 className="h-full"
               >
                 {isApiKeyVisible ? 'Hide' : 'Show'}
@@ -153,7 +155,6 @@ export function SettingsDialog({
           <DialogFooter className="mt-4">
             <Button
               type="submit"
-              onClick={() => onOpenChange(false)}
               isLoading={isPending}
               disabled={isPending || isApiKeyEmpty}
             >
