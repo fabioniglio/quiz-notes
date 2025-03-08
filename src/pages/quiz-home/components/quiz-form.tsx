@@ -3,8 +3,23 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowRight } from 'lucide-react'
+import { ROUTES } from '@/lib/constants'
+import { handlePromise } from '@/lib/utils'
+import { api } from '@convex/_generated/api'
+import { useAction } from 'convex/react'
+import { ConvexError } from 'convex/values'
+import { ArrowRight, Loader2 } from 'lucide-react'
 import { useActionState, useId, useState } from 'react'
+import { generatePath, useNavigate } from 'react-router'
+import { toast } from 'sonner'
+import { z } from 'zod'
+
+const formSchema = z.object({
+  notes: z.string(),
+  context: z.string().optional(),
+  numQuestions: z.coerce.number(),
+  optionsPerQuestion: z.coerce.number(),
+})
 
 const OPTIONS_PER_QUESTION = [
   { value: '2', label: '2 Options' },
@@ -17,23 +32,41 @@ const OPTIONS_PER_QUESTION = [
 type FormState =
   | {
       status: 'error'
-      errors: {
-        email: string
-      }
+      errorMessage: string
     }
   | {
       status: 'success'
     }
+  | {
+      status: 'init'
+    }
 
 export function QuizForm() {
   const id = useId()
+  const navigate = useNavigate()
   const [numberOfQuestions, setNumberOfQuestions] = useState(10)
 
-  const [state, formAction, isPending] = useActionState<FormState, FormData>(
+  const createQuiz = useAction(api.quizzes.createQuiz)
+
+  const [, formAction, isPending] = useActionState<FormState, FormData>(
     async (_, formData) => {
-      console.log(Object.fromEntries(formData))
+      const formObj = formSchema.parse(Object.fromEntries(formData))
+
+      const [result, error] = await handlePromise(createQuiz(formObj))
+
+      if (error) {
+        if (error instanceof ConvexError) {
+          toast.error(error.message)
+        } else {
+          toast.error('An unknown error occurred')
+        }
+        return { status: 'error', errorMessage: error.message }
+      }
+
+      void navigate(generatePath(ROUTES.quizDetail, { quizId: result.quizId }))
+      return { status: 'success' }
     },
-    { status: 'error', errors: { email: '' } }
+    { status: 'init' }
   )
 
   return (
@@ -47,6 +80,18 @@ export function QuizForm() {
           placeholder="Paste your study notes here..."
           name="notes"
           className="min-h-[200px] resize-none"
+          onKeyDown={(event) => {
+            // pressing cmd/ctrl + enter
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+              event.preventDefault()
+              // dispatch a submit event
+              event.currentTarget.form?.dispatchEvent(
+                // bubbles so it can be caught by the form
+                // cancelable so it can be cancelled - since our form calls event.preventDefault()
+                new Event('submit', { bubbles: true, cancelable: true })
+              )
+            }
+          }}
         />
       </div>
 
@@ -73,7 +118,7 @@ export function QuizForm() {
             min={5}
             max={20}
             step={1}
-            name="numberOfQuestions"
+            name="numQuestions"
             className="mt-2"
           />
         </div>
@@ -109,9 +154,14 @@ export function QuizForm() {
           size="lg"
           type="submit"
           className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
+          disabled={isPending}
         >
           Generate Quiz
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {isPending ? (
+            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowRight className="ml-2 h-4 w-4" />
+          )}
         </Button>
       </div>
     </form>
