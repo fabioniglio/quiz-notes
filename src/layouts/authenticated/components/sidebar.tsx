@@ -32,7 +32,7 @@ function QuizLinkItem({ quiz }: { quiz: Doc<'quizzes'> }) {
 }
 
 export function Sidebar() {
-  const quizzes = useQuery(api.quizzes.getAllQuizzesByUserId)
+  const quizzes = useQuery(api.quizzes.queries.getAllQuizzesByUserId)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
 
   const { signOut } = useAuthActions()
