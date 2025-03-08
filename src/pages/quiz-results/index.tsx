@@ -1,3 +1,3 @@
-export function QuizResults() {
+export function QuizResultsPage() {
   return <div>QuizResults</div>
 }
