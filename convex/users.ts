@@ -3,7 +3,7 @@ import { ConvexError, v } from 'convex/values'
 import { api } from './_generated/api'
 import { Doc } from './_generated/dataModel'
 import { ActionCtx, mutation, query, QueryCtx } from './_generated/server'
-import { handlePromise } from './lib'
+import { handlePromise } from './utils'
 
 /**
  * This function is used to get the current user.
