@@ -27,7 +27,7 @@ const schema = defineSchema({
       currentQuestionIndex: v.number(), // Which question user is on
       answers: v.array(
         v.object({
-          questionId: v.id('questions'),
+          questionId: v.string(),
           selectedOptionId: v.optional(v.string()), // Optional because user may not have answered yet
         })
       ),
