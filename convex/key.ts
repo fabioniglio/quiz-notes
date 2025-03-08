@@ -4,8 +4,8 @@ import { ConvexError, v } from 'convex/values'
 import crypto from 'crypto'
 import { api } from './_generated/api'
 import { action } from './_generated/server'
-import { handlePromise } from './lib'
 import { requireCurrentUser } from './users'
+import { handlePromise } from './utils'
 
 const ALGORITHM = { name: 'AES-GCM', length: 256 }
 
