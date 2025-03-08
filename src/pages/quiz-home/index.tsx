@@ -1,7 +1,7 @@
 import { QuizForm } from './components/quiz-form'
 import { QuizList } from './components/quiz-list'
 
-export function QuizHome() {
+export function QuizHomePage() {
   return (
     <div className="mx-auto flex flex-col gap-8">
       <div>

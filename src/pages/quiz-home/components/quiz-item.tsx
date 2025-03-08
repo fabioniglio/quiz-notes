@@ -9,11 +9,12 @@ import { Progress } from '@/components/ui/progress'
 import { ROUTES } from '@/lib/constants'
 import { api } from '@convex/_generated/api'
 import { FunctionReturnType } from 'convex/server'
+import { format } from 'date-fns'
 import { CheckCircle } from 'lucide-react'
 import { generatePath, Link } from 'react-router'
 
 type QuizWithProgress = FunctionReturnType<
-  typeof api.quizzes.listQuizzesWithProgress
+  typeof api.quizzes.queries.listQuizzesWithProgress
 >[number]
 
 export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
@@ -29,7 +30,9 @@ export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
               <CheckCircle className="mt-1 h-5 w-5 flex-shrink-0 text-green-500" />
             )}
           </div>
-          <CardDescription>{quiz.createdAt}</CardDescription>
+          <CardDescription>
+            {format(quiz.createdAt, 'MMM d, yyyy')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2">

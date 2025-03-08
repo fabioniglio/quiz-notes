@@ -3,7 +3,7 @@ import { useQuery } from 'convex/react'
 import { QuizItem, QuizItemSkeleton } from './quiz-item'
 
 export function QuizList() {
-  const recentQuizzes = useQuery(api.quizzes.listQuizzesWithProgress)
+  const recentQuizzes = useQuery(api.quizzes.queries.listQuizzesWithProgress)
 
   // loading
   if (recentQuizzes === undefined) {

@@ -46,13 +46,13 @@ export function QuizForm() {
   const navigate = useNavigate()
   const [numberOfQuestions, setNumberOfQuestions] = useState(10)
 
-  const createQuiz = useAction(api.quizzes.createQuiz)
+  const createQuiz = useAction(api.quizzes.actions.createQuiz)
 
   const [, formAction, isPending] = useActionState<FormState, FormData>(
     async (_, formData) => {
       const formObj = formSchema.parse(Object.fromEntries(formData))
 
-      const [result, error] = await handlePromise(createQuiz(formObj))
+      const [quizId, error] = await handlePromise(createQuiz(formObj))
 
       if (error) {
         if (error instanceof ConvexError) {
@@ -63,7 +63,7 @@ export function QuizForm() {
         return { status: 'error', errorMessage: error.message }
       }
 
-      void navigate(generatePath(ROUTES.quizDetail, { quizId: result.quizId }))
+      void navigate(generatePath(ROUTES.quizDetail, { quizId }))
       return { status: 'success' }
     },
     { status: 'init' }
