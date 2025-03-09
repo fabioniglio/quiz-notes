@@ -261,6 +261,7 @@ export const completeQuiz = action({
       3. 2-3 targeted recommendations for improving their understanding
       4. A brief, motivational conclusion
       5. Make sure to talk TO the user in a "you" tone, not "the user" or "the quiz taker".
+      6. Use a simple langauge. It should be easy to read and slightly causal. Don't use the word "crucial" and try to not repeat same words.
 
       Format your response in markdown with clear headings.`,
     })
