@@ -19,7 +19,7 @@ import { useActionState, useEffect, useState } from 'react'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { QuizNotFound } from './components/quiz-not-found'
+import { QuizNotFound } from '../../components/quiz-not-found'
 import { QuizLoadingPlaceholder } from './components/quiz-skeleton'
 
 const formSchema = z.object({

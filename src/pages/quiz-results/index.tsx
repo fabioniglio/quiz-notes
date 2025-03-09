@@ -1,13 +1,15 @@
+import { QuizNotFound } from '@/components/quiz-not-found'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ROUTES } from '@/lib/constants'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { useQuery } from 'convex/react'
-import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { ResultsSkeleton } from './components/results-skeleton'
 
+import { QuestionReview } from './components/question-review'
 export function QuizResultsPage() {
   const { quizId } = useParams<{ quizId: string }>()
 
@@ -15,8 +17,12 @@ export function QuizResultsPage() {
     quizId: quizId as Id<'quizzes'>,
   })
 
-  if (!results) {
+  if (results === undefined) {
     return <ResultsSkeleton />
+  }
+
+  if (results === null) {
+    return <QuizNotFound />
   }
 
   return (
@@ -77,49 +83,7 @@ export function QuizResultsPage() {
         <h2 className="text-xl font-semibold">Question Review</h2>
 
         {results.questions.map((question) => (
-          <Card
-            key={question.id}
-            className={
-              question.isCorrect ? 'border-green-200' : 'border-red-200'
-            }
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-start gap-2">
-                {question.isCorrect ? (
-                  <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-green-500" />
-                ) : (
-                  <XCircle className="mt-1 h-5 w-5 shrink-0 text-red-500" />
-                )}
-                <CardTitle className="text-base">{question.question}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="text-sm">
-                <span className="font-medium">Your answer: </span>
-                <span
-                  className={
-                    question.isCorrect ? 'text-green-600' : 'text-red-600'
-                  }
-                >
-                  Option {question.userSelectedId?.toUpperCase()}
-                </span>
-              </div>
-
-              {!question.isCorrect && (
-                <div className="text-sm">
-                  <span className="font-medium">Correct answer: </span>
-                  <span className="text-green-600">
-                    Option {question.correctAnswer?.toUpperCase()}
-                  </span>
-                </div>
-              )}
-
-              <div className="pt-2 text-sm">
-                <p className="font-medium">Explanation:</p>
-                <p className="text-muted-foreground">{question.explanation}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <QuestionReview key={question.id} question={question} />
         ))}
       </div>
 
