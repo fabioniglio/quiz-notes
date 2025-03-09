@@ -14,13 +14,39 @@ import { api } from '@convex/_generated/api'
 import { Doc, Id } from '@convex/_generated/dataModel'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
+import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useActionState, useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
+import useMeasure from 'react-use-measure'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { QuizNotFound } from '../../components/quiz-not-found'
 import { QuizLoadingPlaceholder } from './components/quiz-skeleton'
+
+type Direction = 'forwards' | 'backwards'
+
+// We use 110% to make it really look like it's either coming in or going out
+const formVariants = {
+  initial: (direction: Direction) => ({
+    opacity: 0,
+    // How should it come in?
+    // If we're moving forwards, it should come in from the right
+    // If we're moving backwards, it should come in from the left
+    x: direction === 'forwards' ? '110%' : '-110%',
+  }),
+  animate: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: (direction: Direction) => ({
+    opacity: 0,
+    // When exiting, where are we going?
+    // If we're going forwards, the current step should move backwards and be hidden
+    // If we're going backwards, it means the current step should animate out through the right side
+    x: direction === 'forwards' ? '-110%' : '110%',
+  }),
+}
 
 const formSchema = z.object({
   selectedOption: z.string(),
@@ -46,6 +72,8 @@ export function QuizDetailPage() {
   const quiz = useQuery(api.quizzes.queries.getQuizById, {
     id: quizId as Id<'quizzes'>,
   })
+
+  const [ref, bounds] = useMeasure()
 
   const nextQuestion = useMutation(
     api.quizzes.mutations.nextQuestion
@@ -147,8 +175,9 @@ export function QuizDetailPage() {
   const completeQuiz = useAction(api.quizzes.actions.completeQuiz)
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
+  const [direction, setDirection] = useState<Direction>('forwards')
 
-  // move to next question or finish quiz
+  // complete quiz, we check before actually submitting
   const [, formAction, isCompletingQuiz] = useActionState<FormState, FormData>(
     async (_, formData) => {
       const { selectedOption: selectedOptionId } = formSchema.parse(
@@ -159,49 +188,25 @@ export function QuizDetailPage() {
         throw new Error('Quiz not found')
       }
 
-      const isLastQuestion = normalizedIndex === quiz.questions.length
+      const [, error] = await handlePromise(
+        completeQuiz({
+          quizId: quiz._id,
+          selectedOptionId,
+        })
+      )
 
-      if (isLastQuestion) {
-        const [, error] = await handlePromise(
-          completeQuiz({
-            quizId: quiz._id,
-            selectedOptionId,
-          })
-        )
-
-        if (error) {
-          if (error instanceof ConvexError) {
-            toast.error(error.message)
-            return { status: 'error', errorMessage: error.message }
-          }
-
-          toast.error('An unknown error occurred')
-          return { status: 'error', errorMessage: 'An unknown error occurred' }
+      if (error) {
+        if (error instanceof ConvexError) {
+          toast.error(error.message)
+          return { status: 'error', errorMessage: error.message }
         }
 
-        setSelectedOptionId(null)
-        return { status: 'success' }
-      } else {
-        const [, error] = await handlePromise(
-          nextQuestion({
-            quizId: quiz._id,
-            selectedOptionId,
-          })
-        )
-
-        if (error) {
-          if (error instanceof ConvexError) {
-            toast.error(error.message)
-            return { status: 'error', errorMessage: error.message }
-          }
-
-          toast.error('An unknown error occurred')
-          return { status: 'error', errorMessage: 'An unknown error occurred' }
-        }
-
-        setSelectedOptionId(null)
-        return { status: 'success' }
+        toast.error('An unknown error occurred')
+        return { status: 'error', errorMessage: 'An unknown error occurred' }
       }
+
+      setSelectedOptionId(null)
+      return { status: 'success' }
     },
     { status: 'init' }
   )
@@ -210,6 +215,8 @@ export function QuizDetailPage() {
     if (!quiz) {
       throw new Error('Quiz not found')
     }
+
+    setDirection('backwards')
 
     const [, error] = await handlePromise(
       previousQuestion({
@@ -234,6 +241,7 @@ export function QuizDetailPage() {
     }
 
     flushSync(() => {
+      setDirection('forwards')
       setSelectedOptionId(null)
     })
 
@@ -289,12 +297,14 @@ export function QuizDetailPage() {
   const currentIndex = quiz.progress.currentQuestionIndex || 0
   const currentQuestion = quiz.questions[currentIndex]
 
-  const normalizedIndex = currentIndex + 1
-  const progress = (normalizedIndex / quiz?.questions.length) * 100
-  const isLastQuestion = normalizedIndex === quiz.questions.length
-  const isFirstQuestion = normalizedIndex === 1
+  const answeredQuestionsCount = quiz.progress.answers.length
+  const progress = (answeredQuestionsCount / quiz.questions.length) * 100
+  const isLastQuestion = currentIndex === quiz.questions.length - 1
+  const isFirstQuestion = currentIndex === 0
 
-  const isPreviousButtonDisabled = Boolean(isFirstQuestion || quiz.isCompleted)
+  const isPreviousButtonDisabled = Boolean(
+    isFirstQuestion || quiz.isCompleted || isCompletingQuiz
+  )
   const isNextButtonDisabled = Boolean(
     selectedOptionId === null || isCompletingQuiz || quiz.isCompleted
   )
@@ -306,83 +316,119 @@ export function QuizDetailPage() {
         <div className="flex items-center gap-4">
           <Progress value={progress} className="h-2 flex-1" />
           <span className="text-sm font-medium">
-            {normalizedIndex} of {quiz.questions.length}
+            {answeredQuestionsCount} of {quiz.questions.length}
           </span>
         </div>
       </div>
 
-      <form action={formAction}>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-xl">
-              {currentQuestion.question}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectedOptionId || ''}
-              onValueChange={(value) => setSelectedOptionId(value)}
-              className="flex flex-col gap-4"
-              name="selectedOption"
-            >
-              {currentQuestion.options.map((option) => (
-                <label
-                  key={option.id}
-                  className={cn(
-                    'cursor-pointer rounded-md border p-4 transition-colors',
-                    {
-                      'border-primary bg-primary/5':
-                        selectedOptionId === option.id,
-                      'hover:bg-muted': selectedOptionId !== option.id,
-                    }
-                  )}
+      <MotionConfig transition={{ type: 'spring', bounce: 0, duration: 0.3 }}>
+        <motion.div
+          animate={{ height: bounds.height }}
+          className="relative"
+          style={{ width: '100%' }}
+        >
+          <form action={formAction} ref={ref}>
+            <Card className="relative overflow-hidden">
+              <span className="absolute top-4 right-4 z-10">
+                {currentIndex + 1}
+              </span>
+              <AnimatePresence
+                initial={false}
+                mode="popLayout"
+                custom={direction}
+              >
+                <motion.div
+                  key={currentQuestion.id}
+                  variants={formVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  custom={direction}
+                  className="bg-background flex flex-col gap-6"
+                  transition={{
+                    type: 'spring',
+                    damping: 28,
+                    stiffness: 250,
+                  }}
                 >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={cn(
-                        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border',
-                        {
-                          'border-primary bg-primary text-primary-foreground':
-                            selectedOptionId === option.id,
-                          'border-muted-foreground':
-                            selectedOptionId !== option.id,
-                        }
-                      )}
+                  <CardHeader>
+                    <CardTitle className="text-xl">
+                      {currentQuestion.question}
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent>
+                    <RadioGroup
+                      value={selectedOptionId || ''}
+                      onValueChange={(value) => setSelectedOptionId(value)}
+                      className="flex flex-col gap-4"
+                      name="selectedOption"
                     >
-                      {option.id.toUpperCase()}
-                    </div>
-                    <div className="text-sm">{option.text}</div>
-                    <RadioGroupItem
-                      value={option.id}
-                      className="sr-only after:absolute after:inset-0"
-                    />
-                  </div>
-                </label>
-              ))}
-            </RadioGroup>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button
-              disabled={isPreviousButtonDisabled}
-              variant="outline"
-              type="button"
-              onClick={handlePreviousQuestion}
-            >
-              Previous
-            </Button>
-            <Button
-              disabled={isNextButtonDisabled}
-              // Only properly submit if last question
-              // Otherwise move forward with optimistic update
-              type={isLastQuestion ? 'submit' : 'button'}
-              onClick={isLastQuestion ? undefined : handleNextQuestion}
-              isLoading={isCompletingQuiz}
-            >
-              {isLastQuestion ? 'Finish Quiz' : 'Next'}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
+                      {currentQuestion.options.map((option) => (
+                        <label
+                          key={option.id}
+                          className={cn(
+                            'cursor-pointer rounded-md border p-4 transition-colors',
+                            {
+                              'border-primary bg-primary/5':
+                                selectedOptionId === option.id,
+                              'hover:bg-muted': selectedOptionId !== option.id,
+                            }
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border',
+                                {
+                                  'border-primary bg-primary text-primary-foreground':
+                                    selectedOptionId === option.id,
+                                  'border-muted-foreground':
+                                    selectedOptionId !== option.id,
+                                }
+                              )}
+                            >
+                              {option.id.toUpperCase()}
+                            </div>
+                            <div className="text-sm">{option.text}</div>
+                            <RadioGroupItem
+                              value={option.id}
+                              className="sr-only after:absolute after:inset-0"
+                            />
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </CardContent>
+                </motion.div>
+              </AnimatePresence>
+
+              <motion.div layout>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    disabled={isPreviousButtonDisabled}
+                    variant="outline"
+                    type="button"
+                    onClick={handlePreviousQuestion}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    disabled={isNextButtonDisabled}
+                    // Only properly submit if last question
+                    // Otherwise move forward with optimistic update
+                    type={isLastQuestion ? 'submit' : 'button'}
+                    onClick={isLastQuestion ? undefined : handleNextQuestion}
+                    isLoading={isCompletingQuiz}
+                  >
+                    {isLastQuestion ? 'Finish Quiz' : 'Next'}
+                  </Button>
+                </CardFooter>
+              </motion.div>
+            </Card>
+          </form>
+        </motion.div>
+      </MotionConfig>
 
       {quiz.isCompleted && (
         <div className="mt-10 flex justify-center">
