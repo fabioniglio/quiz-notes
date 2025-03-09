@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 
 export function usePrefetchQuery<Query extends FunctionReference<'query'>>(
   query: Query,
-  args: Query['_args'],
+  args?: Query['_args'],
   options: {
     timeoutMs?: number
   } = { timeoutMs: 20000 }
