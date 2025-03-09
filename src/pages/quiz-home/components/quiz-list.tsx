@@ -1,12 +1,13 @@
-import { api } from '@convex/_generated/api'
-import { useQuery } from 'convex/react'
+import { QuizWithProgress } from '..'
 import { QuizItem, QuizItemSkeleton } from './quiz-item'
 
-export function QuizList() {
-  const recentQuizzes = useQuery(api.quizzes.queries.listQuizzesWithProgress)
-
+export function QuizList({
+  quizzes,
+}: {
+  quizzes: Array<QuizWithProgress> | undefined
+}) {
   // loading
-  if (recentQuizzes === undefined) {
+  if (quizzes === undefined) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
@@ -17,7 +18,7 @@ export function QuizList() {
   }
 
   // empty
-  if (recentQuizzes.length === 0) {
+  if (quizzes.length === 0) {
     return (
       <div className="mt-10 flex items-center justify-center">
         <p className="text-muted-foreground">No quizzes yet</p>
@@ -27,7 +28,7 @@ export function QuizList() {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {recentQuizzes.map((quiz) => (
+      {quizzes.map((quiz) => (
         <QuizItem key={quiz._id} quiz={quiz} />
       ))}
     </div>
