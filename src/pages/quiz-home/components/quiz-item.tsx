@@ -18,8 +18,12 @@ type QuizWithProgress = FunctionReturnType<
 >[number]
 
 export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
+  const quizPath = quiz.isCompleted
+    ? generatePath(ROUTES.quizDetailResults, { quizId: quiz._id })
+    : generatePath(ROUTES.quizDetail, { quizId: quiz._id })
+
   return (
-    <Link to={generatePath(ROUTES.quizDetail, { quizId: quiz._id })}>
+    <Link to={quizPath}>
       <Card className="h-full transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
