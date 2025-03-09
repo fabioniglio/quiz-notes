@@ -26,7 +26,7 @@ export function QuizResultsPage() {
   }
 
   return (
-    <div className="mx-auto flex flex-col gap-8">
+    <div className="mx-auto flex max-w-7xl flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">Quiz Results: {results.title}</h1>
         <p className="text-muted-foreground">
@@ -48,14 +48,14 @@ export function QuizResultsPage() {
               <svg className="h-full w-full" viewBox="0 0 100 100">
                 <circle
                   className="stroke-muted fill-none"
-                  strokeWidth="10"
+                  strokeWidth="7"
                   cx="50"
                   cy="50"
                   r="40"
                 />
                 <circle
                   className="stroke-primary fill-none"
-                  strokeWidth="10"
+                  strokeWidth="7"
                   strokeLinecap="round"
                   cx="50"
                   cy="50"
