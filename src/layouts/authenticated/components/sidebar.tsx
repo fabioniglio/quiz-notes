@@ -91,7 +91,7 @@ export function Sidebar() {
               asChild
               className="mb-4 flex w-full items-center justify-between hover:bg-transparent"
             >
-              <Link to={ROUTES.quizHome}>
+              <Link to={ROUTES.quizHome} onMouseEnter={handlePrefetch}>
                 <span className="text-sm font-semibold">Your Quizzes</span>
                 <Plus className="h-4 w-4" />
               </Link>
