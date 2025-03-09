@@ -39,7 +39,7 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="bg-background sticky top-0 left-0 flex h-screen w-64 flex-col border-r">
+      <div className="bg-background sticky top-0 left-0 flex h-screen w-64 shrink-0 flex-col border-r">
         <div className="p-5">
           <Link to={ROUTES.quizHome}>
             <div className="flex items-center gap-2">
