@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
+import { usePrefetchQuery } from '@/hooks/use-prefetch-query'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { api } from '@convex/_generated/api'
@@ -42,10 +43,32 @@ export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
     setSelectedQuizIds(newSelection)
   }
 
+  const prefetchResultsQuery = usePrefetchQuery(
+    api.quizzes.queries.getQuizResults,
+    {
+      quizId: quiz._id,
+    }
+  )
+
+  const prefetchQuizDetailQuery = usePrefetchQuery(
+    api.quizzes.queries.getQuizById,
+    {
+      id: quiz._id,
+    }
+  )
+
   const handleClick = (event: React.MouseEvent) => {
     if (isSelectMode) {
       event.preventDefault() // Prevent navigation when in select mode
       toggleSelection()
+    }
+  }
+
+  const handlePrefetch = () => {
+    if (quiz.isCompleted) {
+      prefetchResultsQuery()
+    } else {
+      prefetchQuizDetailQuery()
     }
   }
 
@@ -55,7 +78,7 @@ export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
       exit={{ opacity: 0, y: -5 }}
       transition={{ duration: 0.2 }}
     >
-      <Link to={quizPath} onClick={handleClick}>
+      <Link to={quizPath} onClick={handleClick} onMouseEnter={handlePrefetch}>
         <Card className="h-full transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between">
