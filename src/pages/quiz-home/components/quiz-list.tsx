@@ -1,11 +1,11 @@
 import { QuizWithProgress } from '..'
 import { QuizItem, QuizItemSkeleton } from './quiz-item'
 
-export function QuizList({
-  quizzes,
-}: {
+type QuizListProps = {
   quizzes: Array<QuizWithProgress> | undefined
-}) {
+}
+
+export function QuizList({ quizzes }: QuizListProps) {
   // loading
   if (quizzes === undefined) {
     return (

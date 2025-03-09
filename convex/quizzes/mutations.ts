@@ -89,3 +89,12 @@ export const updateQuiz = internalMutation({
     return await ctx.db.patch(args.id, { isCompleted: args.isCompleted })
   },
 })
+
+export const deleteQuizzes = mutation({
+  args: { quizIds: v.array(v.id('quizzes')) },
+  handler: async (ctx, args) => {
+    const deletePromises = args.quizIds.map((quizId) => ctx.db.delete(quizId))
+
+    await Promise.all(deletePromises)
+  },
+})

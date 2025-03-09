@@ -5,13 +5,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { ROUTES } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { api } from '@convex/_generated/api'
 import { FunctionReturnType } from 'convex/server'
 import { format } from 'date-fns'
+import { useAtom } from 'jotai'
 import { CheckCircle } from 'lucide-react'
 import { generatePath, Link } from 'react-router'
+import { isSelectModeAtom, selectedQuizIdsAtom } from '../lib/atoms'
 
 type QuizWithProgress = FunctionReturnType<
   typeof api.quizzes.queries.listQuizzesWithProgress
@@ -22,14 +26,53 @@ export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
     ? generatePath(ROUTES.quizDetailResults, { quizId: quiz._id })
     : generatePath(ROUTES.quizDetail, { quizId: quiz._id })
 
+  const [isSelectMode] = useAtom(isSelectModeAtom)
+  const [selectedQuizIds, setSelectedQuizIds] = useAtom(selectedQuizIdsAtom)
+
+  const isSelected = selectedQuizIds.has(quiz._id)
+
+  const toggleSelection = () => {
+    const newSelection = new Set(selectedQuizIds)
+    if (isSelected) {
+      newSelection.delete(quiz._id)
+    } else {
+      newSelection.add(quiz._id)
+    }
+    setSelectedQuizIds(newSelection)
+  }
+
+  const handleClick = (event: React.MouseEvent) => {
+    if (isSelectMode) {
+      event.preventDefault() // Prevent navigation when in select mode
+      toggleSelection()
+    }
+  }
+
   return (
-    <Link to={quizPath}>
+    <Link to={quizPath} onClick={handleClick}>
       <Card className="h-full transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
-            <CardTitle className="line-clamp-2 h-16 text-lg">
-              {quiz.title}
-            </CardTitle>
+            <div className="flex">
+              {isSelectMode && (
+                <div>
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => toggleSelection()}
+                    className="h-5 w-5 border-2"
+                  />
+                </div>
+              )}
+
+              <CardTitle
+                className={cn('line-clamp-2 h-16 text-lg', {
+                  'pl-6': isSelectMode,
+                })}
+              >
+                {quiz.title}
+              </CardTitle>
+            </div>
+
             {quiz.isCompleted && (
               <CheckCircle className="mt-1 h-5 w-5 flex-shrink-0 text-green-500" />
             )}
