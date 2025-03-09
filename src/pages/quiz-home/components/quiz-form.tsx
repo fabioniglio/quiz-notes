@@ -45,6 +45,7 @@ export function QuizForm() {
   const id = useId()
   const navigate = useNavigate()
   const [numberOfQuestions, setNumberOfQuestions] = useState(10)
+  const [notesValue, setNotesValue] = useState('')
 
   const createQuiz = useAction(api.quizzes.actions.createQuiz)
 
@@ -69,17 +70,22 @@ export function QuizForm() {
     { status: 'init' }
   )
 
+  const isGenerateButtonDisabled = isPending || notesValue.length === 0
+
   return (
     <form className="flex flex-col gap-12" action={formAction}>
       <div className="flex flex-col gap-2">
         <label htmlFor="notes" className="text-sm font-medium">
-          Your Study Notes
+          Your Study Notes (Required)
         </label>
         <Textarea
           id="notes"
           placeholder="Paste your study notes here..."
           name="notes"
           className="min-h-[200px] resize-none"
+          required
+          value={notesValue}
+          onChange={(event) => setNotesValue(event.target.value)}
           onKeyDown={(event) => {
             // pressing cmd/ctrl + enter
             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -154,7 +160,7 @@ export function QuizForm() {
           size="lg"
           type="submit"
           className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2"
-          disabled={isPending}
+          disabled={isGenerateButtonDisabled}
         >
           Generate Quiz
           {isPending ? (
