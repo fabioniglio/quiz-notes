@@ -2,6 +2,7 @@ import { ConvexError, v } from 'convex/values'
 import { Doc, Id } from '../_generated/dataModel'
 import {
   internalMutation,
+  internalQuery,
   mutation,
   MutationCtx,
   QueryCtx,
@@ -118,7 +119,7 @@ export const storeQuizResult = internalMutation({
   },
 })
 
-export const getResultById = internalMutation({
+export const getResultById = internalQuery({
   args: { id: v.id('quizResults') },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.id)
