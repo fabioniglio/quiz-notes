@@ -8,7 +8,7 @@ import { Doc, Id } from '../_generated/dataModel'
 import { action, internalQuery } from '../_generated/server'
 import { ALPHABET_MAP } from '../constants'
 import { requireCurrentUser } from '../users'
-import { quizAuthCheckFunc } from './mutations'
+import { quizAuthCheckFunc } from '../utils'
 
 export const createQuiz = action({
   args: {
@@ -150,7 +150,7 @@ export const completeQuiz = action({
       throw new ConvexError('Unauthenticated. Please login to submit a quiz.')
     }
 
-    const quiz: Doc<'quizzes'> | null = await ctx.runQuery(
+    const quizForAuthCheck: Doc<'quizzes'> | null = await ctx.runQuery(
       api.quizzes.queries.getQuizById,
       {
         id: args.quizId,
@@ -158,11 +158,11 @@ export const completeQuiz = action({
     )
 
     // If quiz is not found, throw an error
-    if (!quiz) {
+    if (!quizForAuthCheck) {
       throw new ConvexError('Quiz not found')
     }
 
-    if (quiz.userId !== user._id) {
+    if (quizForAuthCheck.userId !== user._id) {
       throw new ConvexError('Unauthorized. You have no access to this quiz.')
     }
 
@@ -172,11 +172,19 @@ export const completeQuiz = action({
       selectedOptionId: args.selectedOptionId,
     })
 
+    const quiz = await ctx.runQuery(api.quizzes.queries.getQuizById, {
+      id: args.quizId,
+    })
+
+    if (!quiz) {
+      throw new ConvexError('Quiz not found')
+    }
+
     const answers = quiz.progress.answers || []
 
     // Calculate results
     let correctCount = 0
-    const incorrectQuestionIds: Array<string> = []
+    const incorrectQuestionIdsMap: Record<string, boolean> = {}
 
     const questionResults: Array<QuestionResult> = []
 
@@ -206,7 +214,7 @@ export const completeQuiz = action({
       if (selectedOption.isCorrect) {
         correctCount++
       } else {
-        incorrectQuestionIds.push(question.id)
+        incorrectQuestionIdsMap[question.id] = true
       }
 
       questionResults.push({
@@ -225,7 +233,7 @@ export const completeQuiz = action({
     })
 
     // Generate feedback
-    const { text }: { text: string } = await generateText({
+    const { text } = await generateText({
       model: openai('gpt-4-turbo'),
       prompt: `The user took a quiz titled "${quiz.title}" based on these notes:
 
@@ -252,6 +260,7 @@ export const completeQuiz = action({
       2. Specific concepts they need to review further
       3. 2-3 targeted recommendations for improving their understanding
       4. A brief, motivational conclusion
+      5. Make sure to talk TO the user in a "you" tone, not "the user" or "the quiz taker".
 
       Format your response in markdown with clear headings.`,
     })
@@ -264,8 +273,9 @@ export const completeQuiz = action({
         userId: user._id,
         completedAt: Date.now(),
         score,
+        correctCount,
         answers: zodAnswer.array().parse(answers),
-        incorrectQuestionIds,
+        incorrectQuestionIdsMap,
         feedback: text,
       }
     )
