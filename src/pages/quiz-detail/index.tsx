@@ -275,7 +275,7 @@ export function QuizDetailPage() {
       </form>
 
       {quiz.isCompleted && (
-        <div className="flex justify-center">
+        <div className="mt-10 flex justify-center">
           <Button size="lg" asChild>
             <Link
               to={generatePath(ROUTES.quizDetailResults, {
