@@ -18,7 +18,6 @@ Hawanji is free and open source. You use it with your own API key which stored s
 - [Motion](https://motion.dev/) for animations.
 - [Tailwind](https://tailwindcss.com/) for styling.
 - [Shadcn](https://ui.shadcn.com/) for components.
-- [React Hot Keys](https://github.com/jaywcjlove/react-hotkeys) for hotkeys.
 - [Vercel](https://vercel.com/) for hosting and web analytics.
 
 ## Cloning & running 🏄
