@@ -42,13 +42,14 @@ export const QuizResultSchema = defineTable({
   userId: v.id('users'),
   completedAt: v.number(),
   score: v.number(), // Percentage correct
+  correctCount: v.number(),
   answers: v.array(
     v.object({
       questionId: v.string(),
       selectedOptionId: v.string(),
     })
   ),
-  incorrectQuestionIds: v.array(v.string()),
+  incorrectQuestionIdsMap: v.record(v.string(), v.boolean()),
   feedback: v.string(), // AI-generated feedback
 })
 
