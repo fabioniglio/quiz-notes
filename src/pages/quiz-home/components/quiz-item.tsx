@@ -14,6 +14,7 @@ import { FunctionReturnType } from 'convex/server'
 import { format } from 'date-fns'
 import { useAtom } from 'jotai'
 import { CheckCircle } from 'lucide-react'
+import { motion } from 'motion/react'
 import { generatePath, Link } from 'react-router'
 import { isSelectModeAtom, selectedQuizIdsAtom } from '../lib/atoms'
 
@@ -49,54 +50,60 @@ export function QuizItem({ quiz }: { quiz: QuizWithProgress }) {
   }
 
   return (
-    <Link to={quizPath} onClick={handleClick}>
-      <Card className="h-full transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex">
-              {isSelectMode && (
-                <div>
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={() => toggleSelection()}
-                    className="h-5 w-5 border-2"
-                  />
-                </div>
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -5 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Link to={quizPath} onClick={handleClick}>
+        <Card className="h-full transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between">
+              <div className="flex">
+                {isSelectMode && (
+                  <div>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleSelection()}
+                      className="h-5 w-5 border-2"
+                    />
+                  </div>
+                )}
+
+                <CardTitle
+                  className={cn('line-clamp-2 h-16 text-lg', {
+                    'pl-6': isSelectMode,
+                  })}
+                >
+                  {quiz.title}
+                </CardTitle>
+              </div>
+
+              {quiz.isCompleted && (
+                <CheckCircle className="mt-1 h-5 w-5 flex-shrink-0 text-green-500" />
               )}
-
-              <CardTitle
-                className={cn('line-clamp-2 h-16 text-lg', {
-                  'pl-6': isSelectMode,
-                })}
-              >
-                {quiz.title}
-              </CardTitle>
             </div>
-
-            {quiz.isCompleted && (
-              <CheckCircle className="mt-1 h-5 w-5 flex-shrink-0 text-green-500" />
-            )}
-          </div>
-          <CardDescription>
-            {format(quiz.createdAt, 'MMM d, yyyy')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between text-sm">
-              <span>Progress</span>
-              <span>
-                {quiz.progressCount} / {quiz.totalQuestions} questions
-              </span>
+            <CardDescription>
+              {format(quiz.createdAt, 'MMM d, yyyy')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between text-sm">
+                <span>Progress</span>
+                <span>
+                  {quiz.progressCount} / {quiz.totalQuestions} questions
+                </span>
+              </div>
+              <Progress
+                value={(quiz.progressCount / quiz.totalQuestions) * 100}
+                className="h-2"
+              />
             </div>
-            <Progress
-              value={(quiz.progressCount / quiz.totalQuestions) * 100}
-              className="h-2"
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+          </CardContent>
+        </Card>
+      </Link>
+    </motion.div>
   )
 }
 
