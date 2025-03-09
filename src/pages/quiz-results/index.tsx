@@ -1,6 +1,7 @@
 import { QuizNotFound } from '@/components/quiz-not-found'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { usePrefetchQuery } from '@/hooks/use-prefetch-query'
 import { ROUTES } from '@/lib/constants'
 import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
@@ -10,12 +11,21 @@ import ReactMarkdown from 'react-markdown'
 import { Link, useParams } from 'react-router'
 import { QuestionReview } from './components/question-review'
 import { ResultsSkeleton } from './components/results-skeleton'
+
 export function QuizResultsPage() {
   const { quizId } = useParams<{ quizId: string }>()
 
   const results = useQuery(api.quizzes.queries.getQuizResults, {
     quizId: quizId as Id<'quizzes'>,
   })
+
+  const prefetchQuizHomeQuery = usePrefetchQuery(
+    api.quizzes.queries.listQuizzesWithProgress
+  )
+
+  const handlePrefetch = () => {
+    prefetchQuizHomeQuery()
+  }
 
   if (results === undefined) {
     return <ResultsSkeleton />
@@ -154,7 +164,11 @@ export function QuizResultsPage() {
 
       <div className="flex justify-center">
         <Button asChild size="lg">
-          <Link to={ROUTES.quizHome} className="flex items-center gap-2">
+          <Link
+            to={ROUTES.quizHome}
+            className="flex items-center gap-2"
+            onMouseEnter={handlePrefetch}
+          >
             Create Another Quiz
             <ArrowRight className="h-4 w-4" />
           </Link>
