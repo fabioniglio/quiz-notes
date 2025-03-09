@@ -6,10 +6,10 @@ import { api } from '@convex/_generated/api'
 import { Id } from '@convex/_generated/dataModel'
 import { useQuery } from 'convex/react'
 import { ArrowRight } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { Link, useParams } from 'react-router'
-import { ResultsSkeleton } from './components/results-skeleton'
-
 import { QuestionReview } from './components/question-review'
+import { ResultsSkeleton } from './components/results-skeleton'
 export function QuizResultsPage() {
   const { quizId } = useParams<{ quizId: string }>()
 
@@ -70,12 +70,77 @@ export function QuizResultsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Feedback</CardTitle>
+      <Card className="gap-2">
+        <CardHeader>
+          <CardTitle className="text-2xl">Feedback</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>{results.feedback}</p>
+          <div>
+            <ReactMarkdown
+              components={{
+                h1: ({ ...props }) => (
+                  <h1
+                    className="text-primary mb-3 text-xl font-bold"
+                    {...props}
+                  />
+                ),
+                h2: ({ ...props }) => (
+                  <h2
+                    className="text-primary mt-4 mb-2 text-lg font-semibold"
+                    {...props}
+                  />
+                ),
+                h3: ({ ...props }) => (
+                  <h3
+                    className="text-md text-primary/90 mt-3 mb-2 font-medium"
+                    {...props}
+                  />
+                ),
+                p: ({ ...props }) => (
+                  <p className="mb-3 leading-relaxed" {...props} />
+                ),
+                ul: ({ ...props }) => (
+                  <ul className="mb-3 list-disc space-y-1 pl-5" {...props} />
+                ),
+                ol: ({ ...props }) => (
+                  <ol className="mb-3 list-decimal space-y-1 pl-5" {...props} />
+                ),
+                li: ({ ...props }) => <li className="mb-1" {...props} />,
+                a: ({ ...props }) => (
+                  <a
+                    className="text-primary hover:text-primary/80 underline transition-colors"
+                    {...props}
+                  />
+                ),
+                blockquote: ({ ...props }) => (
+                  <blockquote
+                    className="border-primary/30 my-3 border-l-4 pl-4 italic"
+                    {...props}
+                  />
+                ),
+                strong: ({ ...props }) => (
+                  <strong className="font-bold" {...props} />
+                ),
+                em: ({ ...props }) => (
+                  <em className="text-primary/80 italic" {...props} />
+                ),
+                code: ({ ...props }) => (
+                  <code
+                    className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm"
+                    {...props}
+                  />
+                ),
+                pre: ({ ...props }) => (
+                  <pre
+                    className="bg-muted mb-4 overflow-x-auto rounded-md p-3 font-mono text-sm"
+                    {...props}
+                  />
+                ),
+              }}
+            >
+              {results.feedback}
+            </ReactMarkdown>
+          </div>
         </CardContent>
       </Card>
 
