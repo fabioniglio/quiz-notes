@@ -13,14 +13,14 @@ import { SettingsDialog } from './settings-dialog'
 
 function QuizLinkItem({ quiz }: { quiz: Doc<'quizzes'> }) {
   const pathname = useLocation().pathname
-  const quizPath = `/quiz/${quiz._id}`
+  const quizPath = quiz.isCompleted
+    ? generatePath(ROUTES.quizDetailResults, { quizId: quiz._id })
+    : generatePath(ROUTES.quizDetail, { quizId: quiz._id })
 
   return (
     <Link
       key={quiz._id}
-      to={generatePath(ROUTES.quizDetail, {
-        quizId: quiz._id,
-      })}
+      to={quizPath}
       className={cn('rounded-md px-3 py-2 text-sm', {
         'bg-muted font-medium': pathname === quizPath,
         'hover:bg-muted/50': pathname !== quizPath,
