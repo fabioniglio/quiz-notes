@@ -47,11 +47,27 @@ export const nextQuestion = mutation({
       selectedOptionId: args.selectedOptionId,
     }
 
+    // Check if an answer for this question already exists
+    const existingAnswerIndex = quiz.progress.answers.findIndex(
+      (answer) => answer.questionId === currentQuestion.id
+    )
+
+    let updatedAnswers: Array<Answer>
+    const hasExistingAnswer = existingAnswerIndex !== -1
+    if (hasExistingAnswer) {
+      // Update existing answer
+      updatedAnswers = [...quiz.progress.answers]
+      updatedAnswers[existingAnswerIndex] = newAnswer
+    } else {
+      // Add new answer
+      updatedAnswers = [...quiz.progress.answers, newAnswer]
+    }
+
     const newProgress: Progress = {
       ...quiz.progress,
       currentQuestionIndex: newIndex,
       lastUpdated: Date.now(),
-      answers: [...quiz.progress.answers, newAnswer],
+      answers: updatedAnswers,
     }
 
     await ctx.db.patch(args.quizId, {

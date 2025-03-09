@@ -9,13 +9,13 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { ROUTES } from '@/lib/constants'
-import { Status } from '@/lib/schemas'
 import { cn, handlePromise } from '@/lib/utils'
 import { api } from '@convex/_generated/api'
-import { Id } from '@convex/_generated/dataModel'
+import { Doc, Id } from '@convex/_generated/dataModel'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { useActionState, useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -47,19 +47,109 @@ export function QuizDetailPage() {
     id: quizId as Id<'quizzes'>,
   })
 
-  const nextQuestion = useMutation(api.quizzes.mutations.nextQuestion)
-  const previousQuestion = useMutation(api.quizzes.mutations.previousQuestion)
+  const nextQuestion = useMutation(
+    api.quizzes.mutations.nextQuestion
+  ).withOptimisticUpdate((localStore, args) => {
+    const { quizId, selectedOptionId } = args
+
+    // Get the current quiz data from localStore
+    const quiz = localStore.getQuery(api.quizzes.queries.getQuizById, {
+      id: quizId,
+    })
+
+    if (!quiz) return
+
+    // Only proceed if we have the quiz data
+    const currentIndex = quiz.progress?.currentQuestionIndex || 0
+    const currentQuestion = quiz.questions[currentIndex]
+
+    // Math.min is just safety net (same as in the mutation)
+    const newIndex = Math.min(currentIndex + 1, quiz.questions.length - 1)
+
+    // Create new answer object
+    const newAnswer = {
+      questionId: currentQuestion.id,
+      selectedOptionId: selectedOptionId,
+    }
+
+    // Check if an answer for this question already exists
+    const existingAnswerIndex = quiz.progress.answers.findIndex(
+      (answer) => answer.questionId === currentQuestion.id
+    )
+
+    let updatedAnswers
+    const hasExistingAnswer = existingAnswerIndex !== -1
+    if (hasExistingAnswer) {
+      // Update existing answer
+      updatedAnswers = [...quiz.progress.answers]
+      updatedAnswers[existingAnswerIndex] = newAnswer
+    } else {
+      // Add new answer
+      updatedAnswers = [...quiz.progress.answers, newAnswer]
+    }
+
+    // Create new progress object (don't mutate existing objects)
+    const newProgress = {
+      ...quiz.progress,
+      currentQuestionIndex: newIndex,
+      lastUpdated: Date.now(),
+      answers: updatedAnswers,
+    }
+
+    // Create updated quiz object
+    const updatedQuiz: Doc<'quizzes'> = {
+      ...quiz,
+      progress: newProgress,
+    }
+
+    console.log('setting updated quiz', updatedQuiz)
+
+    // Update the query result in localStore
+    localStore.setQuery(
+      api.quizzes.queries.getQuizById,
+      { id: quizId },
+      updatedQuiz
+    )
+  })
+
+  const previousQuestion = useMutation(
+    api.quizzes.mutations.previousQuestion
+  ).withOptimisticUpdate((localStore, args) => {
+    const { quizId } = args
+
+    const quiz = localStore.getQuery(api.quizzes.queries.getQuizById, {
+      id: quizId,
+    })
+
+    if (!quiz) return
+
+    const currentIndex = quiz.progress?.currentQuestionIndex || 0
+
+    const newIndex = Math.max(currentIndex - 1, 0)
+
+    const newProgress = {
+      ...quiz.progress,
+      currentQuestionIndex: newIndex,
+    }
+
+    const updatedQuiz: Doc<'quizzes'> = {
+      ...quiz,
+      progress: newProgress,
+    }
+
+    localStore.setQuery(
+      api.quizzes.queries.getQuizById,
+      { id: quizId },
+      updatedQuiz
+    )
+  })
+
   const completeQuiz = useAction(api.quizzes.actions.completeQuiz)
 
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
-  const [movePreviousQuestionStatus, setMovePreviousQuestionStatus] =
-    useState<Status>('idle')
 
   // move to next question or finish quiz
-  const [, formAction, isMovingToNextQuestion] = useActionState<
-    FormState,
-    FormData
-  >(
+  const [, formAction, isCompletingQuiz] = useActionState<FormState, FormData>(
     async (_, formData) => {
       const { selectedOption: selectedOptionId } = formSchema.parse(
         Object.fromEntries(formData)
@@ -121,8 +211,6 @@ export function QuizDetailPage() {
       throw new Error('Quiz not found')
     }
 
-    setMovePreviousQuestionStatus('loading')
-
     const [, error] = await handlePromise(
       previousQuestion({
         quizId: quiz._id,
@@ -132,16 +220,39 @@ export function QuizDetailPage() {
     if (error) {
       if (error instanceof ConvexError) {
         toast.error(error.message)
-        setMovePreviousQuestionStatus('error')
         return
       }
 
       toast.error('An unknown error occurred')
-      setMovePreviousQuestionStatus('error')
       return
     }
+  }
 
-    setMovePreviousQuestionStatus('success')
+  const handleNextQuestion = async () => {
+    if (!quiz) {
+      throw new Error('Quiz not found')
+    }
+
+    flushSync(() => {
+      setSelectedOptionId(null)
+    })
+
+    const [, error] = await handlePromise(
+      nextQuestion({
+        quizId: quiz._id,
+        selectedOptionId: selectedOptionId!,
+      })
+    )
+
+    if (error) {
+      if (error instanceof ConvexError) {
+        toast.error(error.message)
+        return
+      }
+
+      toast.error('An unknown error occurred')
+      return
+    }
   }
 
   useEffect(() => {
@@ -183,13 +294,9 @@ export function QuizDetailPage() {
   const isLastQuestion = normalizedIndex === quiz.questions.length
   const isFirstQuestion = normalizedIndex === 1
 
-  const isMovingToPreviousQuestion = movePreviousQuestionStatus === 'loading'
-
-  const isPreviousButtonDisabled = Boolean(
-    isMovingToPreviousQuestion || isFirstQuestion || quiz.isCompleted
-  )
+  const isPreviousButtonDisabled = Boolean(isFirstQuestion || quiz.isCompleted)
   const isNextButtonDisabled = Boolean(
-    selectedOptionId === null || isMovingToNextQuestion || quiz.isCompleted
+    selectedOptionId === null || isCompletingQuiz || quiz.isCompleted
   )
 
   return (
@@ -265,8 +372,11 @@ export function QuizDetailPage() {
             </Button>
             <Button
               disabled={isNextButtonDisabled}
-              type="submit"
-              isLoading={isMovingToNextQuestion}
+              // Only properly submit if last question
+              // Otherwise move forward with optimistic update
+              type={isLastQuestion ? 'submit' : 'button'}
+              onClick={isLastQuestion ? undefined : handleNextQuestion}
+              isLoading={isCompletingQuiz}
             >
               {isLastQuestion ? 'Finish Quiz' : 'Next'}
             </Button>
