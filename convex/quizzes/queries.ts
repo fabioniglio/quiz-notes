@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
 import { internalQuery, query } from '../_generated/server'
 import { requireCurrentUser } from '../users'
+import { quizAuthCheckFunc } from '../utils'
 
 export const getQuizById = query({
   args: { id: v.id('quizzes') },
@@ -61,5 +62,38 @@ export const listQuizzesWithProgress = query({
         isCompleted: answeredCount === quiz.questions.length,
       }
     })
+  },
+})
+
+export const getQuizResults = query({
+  args: { quizId: v.id('quizzes') },
+  handler: async (ctx, args) => {
+    const { quiz } = await quizAuthCheckFunc({ quizId: args.quizId, ctx })
+
+    const results = await ctx.db
+      .query('quizResults')
+      .withIndex('by_quizId', (q) => q.eq('quizId', args.quizId))
+      .first()
+
+    if (!results) {
+      return null
+    }
+
+    return {
+      ...results,
+      title: quiz.title,
+      questions: quiz.questions.map((question) => {
+        const userAnswer = results.answers.find(
+          (answer) => answer.questionId === question.id
+        )
+        return {
+          ...question,
+          userSelectedId: userAnswer?.selectedOptionId,
+          isCorrect: !results.incorrectQuestionIdsMap[question.id],
+          correctAnswer: question.options.find((option) => option.isCorrect)
+            ?.id,
+        }
+      }),
+    }
   },
 })
