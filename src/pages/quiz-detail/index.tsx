@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { usePrefetchQuery } from '@/hooks/use-prefetch-query'
 import { ROUTES } from '@/lib/constants'
 import { cn, handlePromise } from '@/lib/utils'
 import { api } from '@convex/_generated/api'
@@ -16,6 +17,7 @@ import { useAction, useMutation, useQuery } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 import { useActionState, useEffect, useState } from 'react'
+import ReactConfetti from 'react-confetti'
 import { flushSync } from 'react-dom'
 import { generatePath, Link, useNavigate, useParams } from 'react-router'
 import useMeasure from 'react-use-measure'
@@ -240,6 +242,7 @@ export function QuizDetailPage() {
       throw new Error('Quiz not found')
     }
 
+    // mainly about setting selected option id to null before optimistically moving forward
     flushSync(() => {
       setDirection('forwards')
       setSelectedOptionId(null)
@@ -263,6 +266,7 @@ export function QuizDetailPage() {
     }
   }
 
+  // check if user is authorized to work on this quiz
   useEffect(() => {
     if (user && quiz && quiz.userId !== user._id) {
       toast.error('Unauthorized to work on this quiz.')
@@ -285,6 +289,19 @@ export function QuizDetailPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quiz?.progress.currentQuestionIndex])
+
+  const prefetchResultsQuery = usePrefetchQuery(
+    api.quizzes.queries.getQuizResults,
+    {
+      quizId: quizId as Id<'quizzes'>,
+    }
+  )
+
+  useEffect(() => {
+    if (quiz && quiz.isCompleted) {
+      prefetchResultsQuery()
+    }
+  }, [prefetchResultsQuery, quiz])
 
   if (quiz === undefined) {
     return <QuizLoadingPlaceholder quizId={quizId!} />
@@ -311,6 +328,15 @@ export function QuizDetailPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
+      {quiz.isCompleted && (
+        <ReactConfetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          numberOfPieces={250}
+          gravity={0.4}
+        />
+      )}
+
       <div className="mb-8">
         <h1 className="mb-2 text-2xl font-bold">{quiz.title}</h1>
         <div className="flex items-center gap-4">
