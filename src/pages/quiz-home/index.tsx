@@ -3,7 +3,7 @@ import { QuizList } from './components/quiz-list'
 
 export function QuizHomePage() {
   return (
-    <div className="mx-auto flex flex-col gap-8">
+    <div className="mx-auto flex flex-col gap-10">
       <div>
         <h1 className="mb-2 text-3xl font-bold">Create a New Quiz</h1>
         <p className="text-muted-foreground">

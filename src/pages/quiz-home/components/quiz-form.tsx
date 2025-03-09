@@ -9,10 +9,12 @@ import { api } from '@convex/_generated/api'
 import { useAction } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { ArrowRight, Loader2 } from 'lucide-react'
-import { useActionState, useId, useState } from 'react'
+import { useActionState, useEffect, useId, useRef, useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
+
+const DELAY_TO_SHOW_DELAYED_GENERATION_TEXT = 2000
 
 const formSchema = z.object({
   notes: z.string(),
@@ -47,11 +49,22 @@ export function QuizForm() {
   const [numberOfQuestions, setNumberOfQuestions] = useState(10)
   const [notesValue, setNotesValue] = useState('')
 
+  // Purpose is to communicate to user it takes a while to generate the quiz
+  const [shouldShowDelayedGenerationText, setShouldShowDelayedGenerationText] =
+    useState(false)
+  const timeoutToShowDelatedGenerationTextRef = useRef<NodeJS.Timeout | null>(
+    null
+  )
+
   const createQuiz = useAction(api.quizzes.actions.createQuiz)
 
   const [, formAction, isPending] = useActionState<FormState, FormData>(
     async (_, formData) => {
       const formObj = formSchema.parse(Object.fromEntries(formData))
+
+      timeoutToShowDelatedGenerationTextRef.current = setTimeout(() => {
+        setShouldShowDelayedGenerationText(true)
+      }, DELAY_TO_SHOW_DELAYED_GENERATION_TEXT)
 
       const [quizId, error] = await handlePromise(createQuiz(formObj))
 
@@ -64,11 +77,24 @@ export function QuizForm() {
         return { status: 'error', errorMessage: error.message }
       }
 
+      if (timeoutToShowDelatedGenerationTextRef.current) {
+        setShouldShowDelayedGenerationText(false)
+        clearTimeout(timeoutToShowDelatedGenerationTextRef.current)
+      }
+
       void navigate(generatePath(ROUTES.quizDetail, { quizId }))
       return { status: 'success' }
     },
     { status: 'init' }
   )
+
+  useEffect(() => {
+    return () => {
+      if (timeoutToShowDelatedGenerationTextRef.current) {
+        clearTimeout(timeoutToShowDelatedGenerationTextRef.current)
+      }
+    }
+  }, [shouldShowDelayedGenerationText])
 
   const isGenerateButtonDisabled = isPending || notesValue.length === 0
 
@@ -155,7 +181,7 @@ export function QuizForm() {
         </div>
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="relative mt-6 flex justify-center">
         <Button
           size="lg"
           type="submit"
@@ -169,6 +195,11 @@ export function QuizForm() {
             <ArrowRight className="ml-2 h-4 w-4" />
           )}
         </Button>
+        {shouldShowDelayedGenerationText && (
+          <p className="text-muted-foreground absolute -bottom-7 text-sm">
+            This may take a while...
+          </p>
+        )}
       </div>
     </form>
   )
