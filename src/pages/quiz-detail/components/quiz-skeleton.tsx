@@ -1,8 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getSkeletonOptionsPerQuestionKey } from '../lib/utils'
 
-export function QuizLoadingPlaceholder() {
+const DEFAULT_SKELETON_OPTIONS_PER_QUESTION = 5
+
+export function QuizLoadingPlaceholder({ quizId }: { quizId: string }) {
+  const localStorageOptionsPerQuestion = localStorage.getItem(
+    getSkeletonOptionsPerQuestionKey(quizId)
+  )
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-8">
@@ -19,7 +26,11 @@ export function QuizLoadingPlaceholder() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
-            {Array(4)
+            {Array(
+              localStorageOptionsPerQuestion
+                ? parseInt(localStorageOptionsPerQuestion)
+                : DEFAULT_SKELETON_OPTIONS_PER_QUESTION
+            )
               .fill(0)
               .map((_, i) => (
                 <div key={i} className="cursor-default rounded-md border p-4">

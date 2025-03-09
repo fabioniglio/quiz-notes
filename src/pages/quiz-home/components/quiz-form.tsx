@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
 import { ROUTES } from '@/lib/constants'
 import { handlePromise } from '@/lib/utils'
+import { getSkeletonOptionsPerQuestionKey } from '@/pages/quiz-detail/lib/utils'
 import { api } from '@convex/_generated/api'
 import { useAction } from 'convex/react'
 import { ConvexError } from 'convex/values'
@@ -67,6 +68,11 @@ export function QuizForm() {
       }, DELAY_TO_SHOW_DELAYED_GENERATION_TEXT)
 
       const [quizId, error] = await handlePromise(createQuiz(formObj))
+
+      localStorage.setItem(
+        getSkeletonOptionsPerQuestionKey(quizId as string),
+        formObj.optionsPerQuestion.toString()
+      )
 
       if (error) {
         if (error instanceof ConvexError) {

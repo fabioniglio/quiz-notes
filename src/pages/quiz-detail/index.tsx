@@ -168,7 +168,7 @@ export function QuizDetailPage() {
   }, [quiz?.progress.currentQuestionIndex])
 
   if (quiz === undefined) {
-    return <QuizLoadingPlaceholder />
+    return <QuizLoadingPlaceholder quizId={quizId!} />
   }
 
   if (quiz === null) {
