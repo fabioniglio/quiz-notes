@@ -1,13 +1,3 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Status } from '@/lib/schemas'
@@ -20,6 +10,7 @@ import { CheckSquare, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { isSelectModeAtom, selectedQuizIdsAtom } from '../lib/atoms'
+import { DeleteQuizzesAlertDialog } from './delete-alert-dialog'
 import { QuizList } from './quiz-list'
 
 export function QuizListSection() {
@@ -130,47 +121,5 @@ export function QuizListSection() {
         />
       </div>
     </div>
-  )
-}
-
-type DeleteQuizzesAlertDialogProps = {
-  isDeleteDialogOpen: boolean
-  setIsDeleteDialogOpen: (isOpen: boolean) => void
-  selectedQuizIds: Set<string>
-  confirmDelete: () => void
-  isDeleting: boolean
-}
-
-function DeleteQuizzesAlertDialog({
-  isDeleteDialogOpen,
-  setIsDeleteDialogOpen,
-  selectedQuizIds,
-  confirmDelete,
-  isDeleting,
-}: DeleteQuizzesAlertDialogProps) {
-  const isMultipleQuizzes = selectedQuizIds.size > 1
-
-  return (
-    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            You are about to delete {selectedQuizIds.size} quiz
-            {isMultipleQuizzes ? 'zes' : ''}. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmDelete}
-            className="bg-destructive hover:bg-destructive/90"
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   )
 }
