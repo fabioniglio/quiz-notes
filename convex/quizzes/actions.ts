@@ -42,7 +42,7 @@ export const createQuiz = action({
         title: z
           .string()
           .describe(
-            'A catchy, descriptive title for the quiz based on the notes'
+            'A catchy, descriptive title for the quiz based on the notes. Do not use words like "Mastering" or "Exploring". Try to be creative.'
           ),
         questions: z
           .array(
