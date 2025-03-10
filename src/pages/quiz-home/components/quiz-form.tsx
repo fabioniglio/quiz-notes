@@ -3,10 +3,12 @@ import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
+import { usePrefetchQuery } from '@/hooks/use-prefetch-query'
 import { ROUTES } from '@/lib/constants'
-import { handlePromise } from '@/lib/utils'
+import { handlePromise, sleep } from '@/lib/utils'
 import { getSkeletonOptionsPerQuestionKey } from '@/pages/quiz-detail/lib/utils'
 import { api } from '@convex/_generated/api'
+import { Id } from '@convex/_generated/dataModel'
 import { useAction } from 'convex/react'
 import { ConvexError } from 'convex/values'
 import { ArrowRight, Loader2 } from 'lucide-react'
@@ -16,6 +18,8 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 
 const DELAY_TO_SHOW_DELAYED_GENERATION_TEXT = 2000
+
+const DELAY_TO_ENSURE_PREFETCH_QUIZ_DETAIL_AFTER_GENERATION = 300
 
 const formSchema = z.object({
   notes: z.string(),
@@ -59,6 +63,8 @@ export function QuizForm() {
 
   const createQuiz = useAction(api.quizzes.actions.createQuiz)
 
+  const prefetchGetQuizById = usePrefetchQuery(api.quizzes.queries.getQuizById)
+
   const [, formAction, isPending] = useActionState<FormState, FormData>(
     async (_, formData) => {
       const formObj = formSchema.parse(Object.fromEntries(formData))
@@ -69,11 +75,6 @@ export function QuizForm() {
 
       const [quizId, error] = await handlePromise(createQuiz(formObj))
 
-      localStorage.setItem(
-        getSkeletonOptionsPerQuestionKey(quizId as string),
-        formObj.optionsPerQuestion.toString()
-      )
-
       if (error) {
         if (error instanceof ConvexError) {
           toast.error(error.message)
@@ -82,6 +83,17 @@ export function QuizForm() {
         }
         return { status: 'error', errorMessage: error.message }
       }
+
+      localStorage.setItem(
+        getSkeletonOptionsPerQuestionKey(quizId as string),
+        formObj.optionsPerQuestion.toString()
+      )
+
+      prefetchGetQuizById({ id: quizId as Id<'quizzes'> })
+
+      // ensure prefetching connection happens first so it feels local first
+      // takes some more time of course, but the entire thing takes time anyways
+      await sleep(DELAY_TO_ENSURE_PREFETCH_QUIZ_DETAIL_AFTER_GENERATION)
 
       if (timeoutToShowDelatedGenerationTextRef.current) {
         setShouldShowDelayedGenerationText(false)
