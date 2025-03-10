@@ -19,7 +19,7 @@ import { z } from 'zod'
 
 const DELAY_TO_SHOW_DELAYED_GENERATION_TEXT = 2000
 
-const DELAY_TO_ENSURE_PREFETCH_QUIZ_DETAIL_AFTER_GENERATION = 300
+const DELAY_TO_ENSURE_PREFETCH_QUIZ_DETAIL_AFTER_GENERATION = 200
 
 const formSchema = z.object({
   notes: z.string(),
