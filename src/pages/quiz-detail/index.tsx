@@ -291,17 +291,22 @@ export function QuizDetailPage() {
   }, [quiz?.progress.currentQuestionIndex])
 
   const prefetchResultsQuery = usePrefetchQuery(
-    api.quizzes.queries.getQuizResults,
-    {
-      quizId: quizId as Id<'quizzes'>,
-    }
+    api.quizzes.queries.getQuizResults
   )
 
   useEffect(() => {
     if (quiz && quiz.isCompleted) {
-      prefetchResultsQuery()
+      prefetchResultsQuery({ quizId: quiz._id })
     }
   }, [prefetchResultsQuery, quiz])
+
+  // reset selected option id when quiz changes
+  useEffect(() => {
+    if (quiz) {
+      setSelectedOptionId(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz?._id])
 
   if (quiz === undefined) {
     return <QuizLoadingPlaceholder quizId={quizId!} />
