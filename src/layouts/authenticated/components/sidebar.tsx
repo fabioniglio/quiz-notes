@@ -51,6 +51,9 @@ function QuizLinkItem({ quiz }: { quiz: Doc<'quizzes'> }) {
 
 export function Sidebar() {
   const quizzes = useQuery(api.quizzes.queries.getAllQuizzesByUserId)
+  const user = useQuery(api.users.getCurrentUser)
+
+  const hasApikey = Boolean(user?.api)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
 
   const prefetchQuizHomeQuery = usePrefetchQuery(
@@ -101,7 +104,16 @@ export function Sidebar() {
           </div>
         </div>
 
-        <div className="mt-auto border-t p-5">
+        <div className="relative mt-auto border-t p-5">
+          {/* Indicator for users who don't have an API key */}
+          {/* Could be better UX, but ok for now */}
+          {!hasApikey && (
+            <span className="absolute top-1.5 right-1.5 flex size-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex size-2.5 rounded-full bg-red-500"></span>
+            </span>
+          )}
+
           <div className="flex flex-col items-center gap-4">
             <Button
               variant="outline"
