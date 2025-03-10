@@ -84,6 +84,8 @@ export function QuizForm() {
         return { status: 'error', errorMessage: error.message }
       }
 
+      // Used to already know how many options per question to show in the quiz skeleton
+      // Helps avoid layout shift on the quiz detail page
       localStorage.setItem(
         getSkeletonOptionsPerQuestionKey(quizId as string),
         formObj.optionsPerQuestion.toString()
