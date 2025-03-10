@@ -19,24 +19,18 @@ function QuizLinkItem({ quiz }: { quiz: Doc<'quizzes'> }) {
     : generatePath(ROUTES.quizDetail, { quizId: quiz._id })
 
   const prefetchResultsQuery = usePrefetchQuery(
-    api.quizzes.queries.getQuizResults,
-    {
-      quizId: quiz._id,
-    }
+    api.quizzes.queries.getQuizResults
   )
 
   const prefetchQuizDetailQuery = usePrefetchQuery(
-    api.quizzes.queries.getQuizById,
-    {
-      id: quiz._id,
-    }
+    api.quizzes.queries.getQuizById
   )
 
   const handlePrefetch = () => {
     if (quiz.isCompleted) {
-      prefetchResultsQuery()
+      prefetchResultsQuery({ quizId: quiz._id })
     } else {
-      prefetchQuizDetailQuery()
+      prefetchQuizDetailQuery({ id: quiz._id })
     }
   }
 
@@ -64,7 +58,7 @@ export function Sidebar() {
   )
 
   const handlePrefetch = () => {
-    prefetchQuizHomeQuery()
+    prefetchQuizHomeQuery({})
   }
 
   const { signOut } = useAuthActions()
