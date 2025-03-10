@@ -8,7 +8,7 @@ import { Doc, Id } from '../_generated/dataModel'
 import { action, internalQuery } from '../_generated/server'
 import { ALPHABET_MAP } from '../constants'
 import { requireCurrentUser } from '../users'
-import { quizAuthCheckFunc } from '../utils'
+import { handlePromise, quizAuthCheckFunc } from '../utils'
 
 export const createQuiz = action({
   args: {
@@ -20,7 +20,13 @@ export const createQuiz = action({
   handler: async (ctx, args) => {
     const user = await requireCurrentUser(ctx)
 
-    const apiKey = await ctx.runAction(api.key.getApiKey)
+    const [apiKey, error] = await handlePromise(
+      ctx.runAction(api.key.getApiKey)
+    )
+
+    if (error) {
+      throw new ConvexError('No API key found. Please create an API key.')
+    }
 
     if (!user) {
       // Shouldn't happen otherwise user should be redirected
@@ -136,9 +142,16 @@ export const quizAuthCheck = internalQuery({
 export const completeQuiz = action({
   args: { quizId: v.id('quizzes'), selectedOptionId: v.string() },
   handler: async (ctx, args) => {
-    const apiKey = await ctx.runAction(api.key.getApiKey)
+    const [apiKey, error] = await handlePromise(
+      ctx.runAction(api.key.getApiKey)
+    )
 
     // If no API key, do nothing to avoid ruining state of DB!
+
+    if (error) {
+      throw new ConvexError('No API key found. Please create an API key.')
+    }
+
     if (!apiKey) {
       throw new ConvexError('No API key found. Please create an API key.')
     }
