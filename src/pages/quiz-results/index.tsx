@@ -24,7 +24,7 @@ export function QuizResultsPage() {
   )
 
   const handlePrefetch = () => {
-    prefetchQuizHomeQuery()
+    prefetchQuizHomeQuery({})
   }
 
   if (results === undefined) {

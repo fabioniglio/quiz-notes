@@ -15,3 +15,7 @@ export async function handlePromise<PromiseResult>(
     return [null, error instanceof Error ? error : new Error(String(error))]
   }
 }
+
+export async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
