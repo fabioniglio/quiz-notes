@@ -16,6 +16,7 @@ import { useActionState, useEffect, useId, useRef, useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { CONTEXT_INPUT_KEY, NOTE_INPUT_KEY } from '../lib/constants'
 
 const DELAY_TO_SHOW_DELAYED_GENERATION_TEXT = 2000
 
@@ -52,7 +53,9 @@ export function QuizForm() {
   const id = useId()
   const navigate = useNavigate()
   const [numberOfQuestions, setNumberOfQuestions] = useState(10)
-  const [notesValue, setNotesValue] = useState('')
+  const [notesValue, setNotesValue] = useState(
+    localStorage.getItem(NOTE_INPUT_KEY) || ''
+  )
 
   // Purpose is to communicate to user it takes a while to generate the quiz
   const [shouldShowDelayedGenerationText, setShouldShowDelayedGenerationText] =
@@ -90,6 +93,9 @@ export function QuizForm() {
         getSkeletonOptionsPerQuestionKey(quizId as string),
         formObj.optionsPerQuestion.toString()
       )
+
+      localStorage.removeItem(NOTE_INPUT_KEY)
+      localStorage.removeItem(CONTEXT_INPUT_KEY)
 
       prefetchGetQuizById({ id: quizId as Id<'quizzes'> })
 
@@ -131,7 +137,10 @@ export function QuizForm() {
           className="min-h-[200px] resize-none"
           required
           value={notesValue}
-          onChange={(event) => setNotesValue(event.target.value)}
+          onChange={(event) => {
+            setNotesValue(event.target.value)
+            localStorage.setItem(NOTE_INPUT_KEY, event.target.value)
+          }}
           onKeyDown={(event) => {
             // pressing cmd/ctrl + enter
             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
@@ -155,6 +164,10 @@ export function QuizForm() {
           id="context"
           placeholder="E.g., Lecture name, book title, or specific topic"
           name="context"
+          defaultValue={localStorage.getItem(CONTEXT_INPUT_KEY) || ''}
+          onChange={(event) => {
+            localStorage.setItem(CONTEXT_INPUT_KEY, event.target.value)
+          }}
         />
       </div>
 

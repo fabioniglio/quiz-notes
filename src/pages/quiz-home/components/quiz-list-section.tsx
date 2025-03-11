@@ -24,6 +24,8 @@ export function QuizListSection() {
 
   const recentQuizzes = useQuery(api.quizzes.queries.listQuizzesWithProgress)
 
+  console.log('recentQuizzes', recentQuizzes)
+
   const filteredQuizzes = recentQuizzes?.filter((quiz) =>
     quiz.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
