@@ -1,29 +1,28 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ROUTES, TAB_VALUES } from '@/lib/constants'
+import { ROUTES } from '@/lib/constants'
 import { api } from '@convex/_generated/api'
 import { useConvexAuth, useQuery } from 'convex/react'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { generatePath, useNavigate } from 'react-router'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LoginForm } from './components/login-form'
 import { RegisterForm } from './components/register-form'
 
 export function LoginPage() {
-  const [tab, setTab] = useState<
-    typeof TAB_VALUES.LOGIN | typeof TAB_VALUES.REGISTER
-  >(TAB_VALUES.LOGIN)
-
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
   const user = useQuery(api.users.getCurrentUser)
   const state = useConvexAuth()
   const isLoading = user === undefined || state.isLoading
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!isLoading && user) {
+    // Only redirect if we're sure the user is authenticated
+    if (!isLoading && user && state.isAuthenticated) {
+      console.log('User authenticated, redirecting to quiz home')
       void navigate(generatePath(ROUTES.quizHome))
     }
-  }, [isLoading, user, navigate])
+  }, [isLoading, user, navigate, state.isAuthenticated])
 
   if (isLoading) {
     return (
@@ -36,30 +35,19 @@ export function LoginPage() {
   return (
     <div className="flex flex-1 items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-col gap-1">
-          <CardTitle className="text-primary flex items-center justify-center gap-2 text-center text-2xl">
-            Quiz Notes
-            <span className="text-2xl">🙋‍♂️</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Tabs
-            value={tab}
-            onValueChange={(value) =>
-              setTab(value as (typeof TAB_VALUES)[keyof typeof TAB_VALUES])
-            }
-            className="w-full"
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as 'login' | 'register')}
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value={TAB_VALUES.LOGIN}>Login</TabsTrigger>
-              <TabsTrigger value={TAB_VALUES.REGISTER}>Register</TabsTrigger>
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
             </TabsList>
-
-            <TabsContent value={TAB_VALUES.LOGIN} className="pt-4">
+            <TabsContent value="login">
               <LoginForm />
             </TabsContent>
-
-            <TabsContent value={TAB_VALUES.REGISTER} className="pt-4">
+            <TabsContent value="register">
               <RegisterForm />
             </TabsContent>
           </Tabs>

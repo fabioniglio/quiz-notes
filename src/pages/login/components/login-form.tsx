@@ -69,6 +69,7 @@ export function LoginForm() {
       <Button type="submit" isLoading={isPending} disabled={isPending}>
         Login
       </Button>
+      <Button onClick={() => void signIn('github')}>Sign in with Github</Button>
     </form>
   )
 }

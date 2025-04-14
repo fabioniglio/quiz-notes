@@ -63,7 +63,6 @@ export function RegisterForm() {
         errors.email = 'Email already exists'
         return { status: 'error', errors }
       }
-
       const [, signInError] = await handlePromise(signIn('password', formData))
 
       if (signInError) {
@@ -120,6 +119,7 @@ export function RegisterForm() {
       <Button type="submit" isLoading={isPending} disabled={isPending}>
         Register
       </Button>
+      <Button onClick={() => void signIn('github')}>Sign up with Github</Button>
     </form>
   )
 }

@@ -13,10 +13,13 @@ export function AuthenticatedLayout() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    // Only redirect if we're sure the user is not authenticated
+    // This prevents redirect loops during loading
+    if (!isLoading && !user && state.isAuthenticated === false) {
+      console.log('User not authenticated, redirecting to login')
       void navigate(generatePath(ROUTES.login))
     }
-  }, [isLoading, user, navigate])
+  }, [isLoading, user, navigate, state.isAuthenticated])
 
   if (isLoading) {
     return (
