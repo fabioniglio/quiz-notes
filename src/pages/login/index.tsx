@@ -38,7 +38,7 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col gap-1">
           <CardTitle className="text-primary flex items-center justify-center gap-2 text-center text-2xl">
-            Hawanji
+            Quiz Notes
             <span className="text-2xl">🙋‍♂️</span>
           </CardTitle>
         </CardHeader>
