@@ -3,7 +3,7 @@ https://github.com/user-attachments/assets/1078e174-7e27-4459-bc38-1c8cd11ead5e
 
 <div align="center">
 <h1 align="center">
-  <a href="https://hawanji.vercel.app/">Hawanji</a>
+  <a href="https://hawanji.vercel.app/">Quiz Note</a>
 </h1>
   <p>
     Turn your notes into quiz with AI.
@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/1078e174-7e27-4459-bc38-1c8cd11ead5e
 
 ## Free and Open Source
 
-Hawanji is free and open source. You use it with your own API key which stored securely.
+Quiz Note is free and open source. You use it with your own API key which stored securely.
 
 ## Tech stack 💻
 
